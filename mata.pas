@@ -1,0 +1,714 @@
+unit mata;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, GLScene, GLVectorFileObjects, GLTexture, GLCadencer, GLObjects,
+  GLMisc, GLWin32Viewer, StdCtrls, GLNavigator, GLCollision, GLSound,
+  GLSMBASS, DXSounds, GLHUDObjects, GLBitmapFont, GLWindowsFont, jpeg,
+  ExtCtrls, Buttons, glblur, GLWin32FullScreenViewer, GLFireFX,
+  GLTexCombineShader, AsyncTimer;
+
+type
+  TForm1 = class(TForm)
+    GLScene1: TGLScene;
+    GLCamera1: TGLCamera;
+    GLDummyCube1: TGLDummyCube;
+    GLCadencer1: TGLCadencer;
+    GLMaterialLibrary1: TGLMaterialLibrary;
+    GLActor1: TGLActor;
+    GLLightSource1: TGLLightSource;
+    GLNavigator1: TGLNavigator;
+    CollisionManager1: TCollisionManager;
+    GLActor2: TGLActor;
+    GLFreeForm1: TGLFreeForm;
+    DXWaveList1: TDXWaveList;
+    DXSound1: TDXSound;
+    GLWindowsBitmapFont1: TGLWindowsBitmapFont;
+    GLHUDText1: TGLHUDText;
+    GLHUDText2: TGLHUDText;
+    Objeto1: TGLHUDText;
+    Objeto2: TGLHUDText;
+    Objeto3: TGLHUDText;
+    mosca2: TGLActor;
+    mosca3: TGLActor;
+    conta: TGLHUDText;
+    GLLightSource2: TGLLightSource;
+    Lampada: TGLActor;
+    inicial: TGLFreeForm;
+    GLLightSource3: TGLLightSource;
+    GLCube1: TGLCube;
+    GLFireFXManager1: TGLFireFXManager;
+    GLSceneViewer1: TGLFullScreenViewer;
+    botao: TGLCube;
+    chinelo: TGLActor;
+    Tempo: TGLHUDText;
+    GLCadencer2: TGLCadencer;
+    GLFreeForm2: TGLFreeForm;
+    ranking: TGLHUDText;
+    procedure FormCreate(Sender: TObject);
+    procedure GLCadencer1Progress(Sender: TObject; const deltaTime,
+      newTime: Double);
+    procedure HandleKeys(const deltaTime: Double);
+    procedure CollisionManager1Collision(Sender: TObject; object1,
+      object2: TGLBaseSceneObject);
+    procedure GLSceneViewera1Click(Sender: TObject);
+    procedure GLSceneViewera1MouseDown(Sender: TObject;
+      Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+  private
+    { Private declarations }
+  public
+
+  end;
+
+var
+  Form1: TForm1;
+  mx : integer;
+  my : integer;
+  inicia: integer;
+  escolha : string;
+  cont_mosca1, cont_mosca2, cont_mosca3 : integer;
+  trava : integer;
+  trava_aux: integer;
+  solta : integer;
+  libera, libera_aux : integer;
+  Contador : integer;
+  pick : TGLCustomSceneObject;
+  m1 : integer;
+  i,i2: real;
+  V : array[0..255] of integer;
+  iss: string;
+
+implementation
+
+{$R *.dfm}
+
+uses GLFileSMD, keyboard, GlFile3ds, Math, carreg;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+   Form1.SendToBack;
+   GLSceneViewer1.Active:=true;
+   DXWaveList1.Items.Items[2].Play(false);
+   m1:=0;
+   libera:=0;
+   libera_aux:=0;
+   solta:=0;
+   inicia:=0;
+   trava:=0;
+   trava_aux:=0;
+   contador:=0;
+   cont_mosca1:=0;
+   cont_mosca2:=0;
+   cont_mosca3:=0;
+   i:=0;
+   i2:=0;
+
+   pick:=nil;
+   lampada.Visible:=false;
+   lampada.LoadFromFile('lampada.smd');
+   conta.Visible:=false;
+
+
+   GLHUDText2.Visible:=false;
+
+   //scenario
+
+   inicial.LoadFromFile('scenario_inicial.3ds');
+
+   //mosca 1
+  GLActor1.LoadFromFile('mosca.smd');
+  GlActor1.AddDataFromFile('mosca_voando.smd');
+  GLActor1.AddDataFromFile('mosca_caindo.smd');
+  glActor1.Animations[1].MakeSkeletalTranslationStatic;
+  GlActor1.SwitchToAnimation('mosca_voando');
+
+
+
+      mosca2.LoadFromFile('mosca.smd');
+      mosca2.AddDataFromFile('mosca_voando.smd');
+      mosca2.AddDataFromFile('mosca_caindo.smd');
+      mosca2.Animations[1].MakeSkeletalTranslationStatic;
+      mosca2.SwitchToAnimation('mosca_voando');
+      mosca2.Visible:=false;
+
+      mosca3.LoadFromFile('mosca.smd');
+      mosca3.AddDataFromFile('mosca_voando.smd');
+      mosca3.AddDataFromFile('mosca_caindo.smd');
+      mosca3.Animations[1].MakeSkeletalTranslationStatic;
+      mosca3.SwitchToAnimation('mosca_voando');
+      mosca3.Visible:=false;
+ // ator 2  - lasca de madeira
+  GLActor2.LoadFromFile('raquete.smd');
+  GLActor2.AddDataFromFile('raquete_bate.smd');
+  GLActor2.AddDataFromFile('raquete_stand.smd');
+  GlActor2.Animations[1].MakeSkeletalTranslationStatic;
+  GlActor2.SwitchToAnimation('raquete_stand');
+
+  // Chinelo
+
+  chinelo.LoadFromFile('chinelo.smd');
+  chinelo.AddDataFromFile('chinelo_bate.smd');
+  GlActor2.Animations[1].MakeSkeletalTranslationStatic;
+
+
+ // scenario
+
+  GLCamera1.RollAngle:=90;
+
+
+
+
+end;
+
+
+procedure TForm1.HandleKeys(const deltaTime: Double);
+begin
+
+  if IsKeyDown('c')
+    then showmessage(IntTostr(mosca2.CurrentFrame));
+
+
+  If IsKeyDown(VK_ESCAPE)
+    then begin
+   halt;
+
+
+     end;
+
+    If IsKeyDown(Vk_UP)
+    then begin
+       if escolha = 'chinelo' then chinelo.Position.x:= chinelo.Position.x +4;
+       if escolha = 'raquete' then GLActor2.Position.x:= GLActor2.Position.x +4;
+    end;
+
+  If IsKeyDown(VK_DOWN)
+    then begin
+      if escolha = 'chinelo' then chinelo.Position.x:= chinelo.Position.x -4;
+      if escolha = 'raquete' then GLActor2.Position.x:= GLActor2.Position.x -4;
+    end;
+
+
+ end;
+
+procedure TForm1.GLCadencer1Progress(Sender: TObject; const deltaTime,
+  newTime: Double);
+  var Arq: TextFile;
+    ArqName: String;
+    conteudo: string;
+    tudo: string;
+begin
+HandleKeys(deltatime);
+
+
+if GlActor1.CurrentFrame > 75 then Glactor1.visible:=false;
+if mosca2.CurrentFrame > 75 then mosca2.visible:=false;
+if mosca3.CurrentFrame > 75 then mosca3.visible:=false;
+
+//------------------------------------------------------------
+// caminho da mosca 1
+
+    if (cont_mosca1 = 1) and (inicia = 1)
+        then begin
+          GLActor1.Position.x:= GLActor1.position.X - 1.1;
+          GLActor1.Position.z:= GLActor1.position.z + 0.13;
+          GLActor1.RollAngle:=0;
+          GLActor1.TurnAngle:=150;
+          GlActor1.PitchAngle:=70;
+          if  (GLActor1.Position.X <= -200)
+              then begin
+                 GLActor1.SwitchToAnimation('mosca_voando');
+                 GlActor1.Visible:=true;
+                 DXWaveList1.Items.Items[3].Play(false);
+                 cont_mosca1:=2;
+                 GLActor1.Position.X:=0;
+                 GLActor1.Position.Y:=-100;
+                 GLActor1.Position.Z:=0;
+                 GLActor1.RollAngle:=-90;
+              end;
+        end;
+
+    if (cont_mosca1 = 2) and (inicia = 1)
+      then begin
+        GLActor1.Position.y:= GLActor1.position.y + 1.2;
+        GLActor1.Position.z:= GLActor1.position.z + 0.35;
+          if (GLActor1.Position.y >= 200)
+              then begin
+                GLActor1.SwitchToAnimation('mosca_voando');
+                GlActor1.Visible:=true;
+                DXWaveList1.Items.Items[3].Play(false);
+                cont_mosca1:=3;
+                GLActor1.Position.X:=-180;
+                GLActor1.Position.Y:=40;
+                GLActor1.Position.Z:=20;
+                GLActor1.RollAngle:=-1600;
+              end;
+        end;
+
+    if (cont_mosca1 = 3) and (inicia = 1)
+      then begin
+         GLActor1.Position.x:= GLActor1.position.x + 2;
+         GLActor1.Position.z:= GLActor1.position.z - 0.13;
+            if  GLActor1.Position.x > 100
+              then begin
+                GLActor1.SwitchToAnimation('mosca_voando');
+                GlActor1.Visible:=true;
+                DXWaveList1.Items.Items[3].Play(false);
+                cont_mosca1:= 1;
+            end;
+       end;
+//----------------------------------------------------------------
+// Caminho da Mosca 2
+
+
+   if (cont_mosca2 = 1) and (inicia = 1)
+        then begin
+          mosca2.Position.y:= mosca2.position.y - 1.7;
+          mosca2.Position.z:= mosca2.position.z - 0.13;
+          if  (mosca2.Position.y <= -150)
+              then begin
+                mosca2.SwitchToAnimation('mosca_voando');
+                 mosca2.visible:=true;
+                 DXWaveList1.Items.Items[4].Play(false);
+                 cont_mosca2:=2;
+                 mosca2.Position.X:=100;
+                 mosca2.Position.Y:=0;
+                 mosca2.Position.Z:=0;
+                 mosca2.RollAngle:=-90;
+              end;
+        end;
+
+    if (cont_mosca2 = 2) and (inicia = 1)
+      then Begin
+          mosca2.Position.x:= mosca2.position.x - 1.5;
+          mosca2.Position.z:= mosca2.position.z + 0.13;
+             if  (mosca2.Position.x <= -250)
+              then begin
+                mosca2.SwitchToAnimation('mosca_voando');
+                 mosca2.visible:=true;
+                 DXWaveList1.Items.Items[4].Play(false);
+                 cont_mosca2:=3;
+                 mosca2.Position.X:=-20;
+                 mosca2.Position.Y:=10;
+                 mosca2.Position.Z:=20;
+                 mosca2.RollAngle:=-90;
+              end;
+       end;
+
+    if (cont_mosca2 = 3) and (inicia = 1)
+      then begin
+         mosca2.Position.x:= mosca2.position.x - 1.5;
+         mosca2.Position.y:= mosca2.position.y - 0.5;
+         mosca2.Position.z:= mosca2.position.z + 0.5;
+            if mosca2.Position.X < -200
+              then begin
+                mosca2.SwitchToAnimation('mosca_voando');
+                mosca2.visible:=true;
+                DXWaveList1.Items.Items[4].Play(false);
+                mosca2.Position.x:=-20 ;
+                mosca2.Position.y:= 200;
+                mosca2.Position.z:= 50;
+                cont_mosca2:=1;
+                mosca2.RollAngle:=0;
+            end;
+      end;
+
+// Caminho da Mosca 3
+
+  
+   if (cont_mosca3 = 1) and (inicia = 1)
+        then begin
+          mosca3.Position.x:= mosca3.position.x - 1.4;
+          mosca3.Position.z:= mosca3.position.z + 0.8;
+          mosca3.Position.y:= mosca3.position.y - 0.4;
+          if  (mosca3.Position.x <= -180)
+              then begin
+                mosca3.SwitchToAnimation('mosca_voando');
+                 mosca3.visible:=true;
+                 DXWaveList1.Items.Items[5].Play(false);
+                 cont_mosca3:=2;
+                 mosca3.Position.X:=-180;
+                 mosca3.Position.Y:=70;
+                 mosca3.Position.Z:=80;
+                 mosca3.TurnAngle:=100;
+                 mosca3.RollAngle:=40;
+                 mosca3.PitchAngle:=-20;
+              end;
+        end;
+
+    if (cont_mosca3 = 2) and (inicia = 1)
+      then Begin
+          mosca3.Position.x:= mosca3.position.x + 1.1;
+          mosca3.Position.z:= mosca3.position.z - 0.7;
+          mosca3.Position.y:= mosca3.position.y - 0.9;
+             if  (mosca3.Position.x >= 200)
+              then begin
+                 mosca3.SwitchToAnimation('mosca_voando');
+                 mosca3.visible:=true;
+                 DXWaveList1.Items.Items[5].Play(false);
+                 cont_mosca3:=3;
+                 mosca3.Position.X:=-50;
+                 mosca3.Position.Y:=100;
+                 mosca3.Position.Z:=120;
+                 mosca3.RollAngle:=0;
+                 mosca3.PitchAngle:=0;
+                 mosca3.TurnAngle:=130;
+              end;
+       end;
+
+    if (cont_mosca3 = 3) and (inicia = 1)
+      then begin
+         mosca3.Position.y:= mosca3.position.y - 1.1;
+         mosca3.Position.z:= mosca3.position.z - 0.7;
+            if mosca3.Position.y < -200
+              then begin
+                mosca3.SwitchToAnimation('mosca_voando');
+                mosca3.visible:=true;
+                DXWaveList1.Items.Items[5].Play(false);
+                mosca3.Position.x:=130 ;
+                mosca3.Position.y:= 50;
+                mosca3.Position.z:= -70;
+                cont_mosca3:=1;
+                mosca3.RollAngle:=-90;
+                mosca3.PitchAngle:=-70;
+                mosca3.TurnAngle:=150;
+
+            end;
+      end;
+
+
+// da o tempo pra trava
+
+  if trava = 1
+    then begin
+      trava_aux:=trava_aux + 1;
+        if trava_aux > 30
+          then begin
+
+
+
+            trava:=0;
+            trava_aux:=0;
+        end;
+   end;
+
+
+
+
+
+// a trava da lampada
+
+
+CollisionManager1.CheckCollisions;
+
+//verifica lampada
+
+
+
+// mouse
+
+      if escolha = 'raquete'
+        then begin
+          GLActor2.Position.z:=-(mouse.CursorPos.y)+250;
+          GlActor2.Position.y :=-(mouse.CursorPos.x-200);
+        end
+      else if escolha = 'chinelo'
+        then begin
+          chinelo.Position.z:=-(mouse.CursorPos.y)+250;
+          chinelo.Position.y :=-(mouse.CursorPos.x-200);
+        end;
+// Contador
+
+conta.Text:= IntToStr(Contador);
+
+if inicia = 0
+  then botao.Turn(2);
+
+ solta:=0;
+
+
+// Tempo
+
+  if inicia = 1
+    then begin
+       GLCadencer2.Enabled:=true;
+
+       if Tempo.Text < '0:60'
+        then begin
+       i:= GLCadencer2.GetCurrentTime;
+        end;
+
+       if Tempo.Text = '0:59'
+        then i:= GLCadencer2.GetCurrentTime+40;
+
+
+       if Tempo.Text > '0:59'
+        then i:= GLCadencer2.GetCurrentTime+40;
+
+        if Tempo.Text > '1:59'
+        then i:= GLCadencer2.GetCurrentTime+80;
+
+        if Tempo.Text > '2:59'
+        then i:= GLCadencer2.GetCurrentTime+120;
+
+        if Tempo.Text > '3:59'
+        then i:= GLCadencer2.GetCurrentTime+160;
+
+       Tempo.Text:=FormatFloat('0:00',i);
+
+        if tempo.Text > '4:59' then tempo.Text:= '5:00';
+
+
+
+    end;
+
+
+// Finaliza o jogo
+if inicia = 1 then
+//tempo.Text:='5:00';
+  if (Tempo.Text = '5:00') and (inicia = 1)
+    then begin
+        chinelo.visible:=false;
+        inicia:=10;
+        mosca2.visible:=false;
+        mosca3.visible:=false;
+        GLActor1.visible:=false;
+        GLFreeForm1.visible:=false;
+        lampada.visible:=false;
+        GLSceneViewer1.Cursor:= crDefault;
+        conta.visible:=false;
+        Glactor2.visible:=false;
+        GLFreeForm2.LoadFromFile('ranking2.3ds');
+        //arquivo
+        assignFile(arq,'ranking.txt');
+        Append(arq);
+       // conteudo:=;
+        writeln(arq,'1- ola');
+        writeln(arq,'2- eu');
+        writeln(arq,'3- agora foi ein');
+        CloseFile(Arq);
+
+
+        assignfile(Arq,'ranking.txt');
+        reset(Arq);
+          while not EOF(arq) do begin
+
+            readln(arq,conteudo);
+             tudo:=tudo+#13+conteudo;
+            end;
+        ranking.Visible:=true;
+        ranking.Text:=tudo;
+
+
+    end;
+
+end;
+
+procedure TForm1.CollisionManager1Collision(Sender: TObject; object1,
+  object2: TGLBaseSceneObject);
+begin
+
+// lasca de madeira
+
+  if (GlActor2.CurrentAnimation = 'raquete_bate') and (trava = 0) and (solta = 1)and (GlActor2.visible = true) then begin
+    if (object2 = Glactor1) and (Glactor1.visible = true)
+      then begin
+    GLActor1.SwitchToAnimation('mosca_caindo');
+    DXWaveList1.Items.Items[1].Play(false);
+    trava:=1;
+    solta:=0;
+    contador:=contador+1;
+    if DXWaveList1.Items.Items[3].Initialized = true then DXWaveList1.Items.Items[3].Stop;
+      end;
+
+      if (object2 = mosca2) and (mosca2.visible = true)
+      then begin
+    mosca2.SwitchToAnimation('mosca_caindo');
+    DXWaveList1.Items.Items[1].Play(false);
+    trava:=1;
+    solta:=0;
+    libera:=1;
+    contador:=contador+1;
+
+    if DXWaveList1.Items.Items[4].Initialized = true then DXWaveList1.Items.Items[4].Stop;
+      end;
+
+      if (object2 = mosca3) and (mosca3.visible = true)
+      then begin
+    mosca3.SwitchToAnimation('mosca_caindo');
+    DXWaveList1.Items.Items[1].Play(false);
+    trava:=1;
+    solta:=0;
+    libera:=1;
+    contador:=contador+1;
+    if DXWaveList1.Items.Items[5].Initialized = true then DXWaveList1.Items.Items[5].Stop;
+      end;
+  end;
+
+// chinelo
+
+  if (chinelo.CurrentAnimation = 'chinelo_bate') and (trava = 0) and (solta = 1) and (chinelo.visible = true) then begin
+    if (object2 = Glactor1) and (Glactor1.visible = true)
+      then begin
+    GLActor1.SwitchToAnimation('mosca_caindo');
+    DXWaveList1.Items.Items[7].Play(false);
+    trava:=1;
+    solta:=0;
+    contador:=contador+1;
+    if DXWaveList1.Items.Items[3].Initialized = true then DXWaveList1.Items.Items[3].Stop;
+      end;
+
+      if (object2 = mosca2) and (mosca2.visible = true)
+      then begin
+    mosca2.SwitchToAnimation('mosca_caindo');
+    DXWaveList1.Items.Items[7].Play(false);
+    trava:=1;
+    solta:=0;
+    libera:=1;
+    contador:=contador+1;
+
+    if DXWaveList1.Items.Items[4].Initialized = true then DXWaveList1.Items.Items[4].Stop;
+      end;
+
+      if (object2 = mosca3) and (mosca3.visible = true)
+      then begin
+    mosca3.SwitchToAnimation('mosca_caindo');
+    DXWaveList1.Items.Items[7].Play(false);
+    trava:=1;
+    solta:=0;
+    libera:=1;
+    contador:=contador+1;
+    if DXWaveList1.Items.Items[5].Initialized = true then DXWaveList1.Items.Items[5].Stop;
+      end;
+  end;
+
+
+end;
+
+procedure TForm1.GLSceneViewera1Click(Sender: TObject);
+begin
+  if escolha = 'raquete'
+    then begin
+        GLActor2.AnimationMode:=aamPlayOnce;
+        GLActor2.SwitchToAnimation('raquete_bate');
+        DXWaveList1.Items.Items[0].Play(false);
+        solta:=1;
+    end
+    else if escolha = 'chinelo'
+      then begin
+        chinelo.AnimationMode:=aamPlayOnce;
+        chinelo.SwitchToAnimation('chinelo_bate');
+        DXWaveList1.Items.Items[6].Play(false);
+        solta:=1;
+    end;
+
+end;
+
+procedure TForm1.GLSceneViewera1MouseDown(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+
+begin
+  if inicia = 0 then begin
+	pick:=(GLSceneViewer1.Buffer.GetPickedObject(x, y) as TGLCustomSceneObject);
+
+	if Assigned(pick)
+    then begin
+     if pick = GlActor2
+      then begin
+        GlCube1.Position.Y:=40;
+        GLFireFXManager1.Disabled:=false;
+		    Objeto1.Rotation:=3;
+        GlActor2.AnimationMode:=aamPlayOnce;
+        GlActor2.SwitchToAnimation('raquete_bate');
+        DXWaveList1.Items.Items[0].Play(false);
+      end;
+
+      if pick = chinelo
+      then begin
+        GlCube1.Position.Y:=-40;
+        GLFireFXManager1.Disabled:=false;
+		    Objeto1.Rotation:=2;
+        chinelo.AnimationMode:=aamPlayOnce;
+        chinelo.SwitchToAnimation('chinelo_bate');
+        DXWaveList1.Items.Items[6].Play(false);
+      end;
+      if pick = botao
+       then begin
+          if Objeto1.Rotation = 3
+            then begin
+              chinelo.visible:=false;
+              botao.Destroy;
+              botao.free;
+              inicia:=1;
+              escolha:= 'raquete';
+              Objeto1.Destroy;
+              Objeto1.Free;
+              Objeto2.Destroy;
+              Objeto2.free;
+              Objeto3.Destroy;
+              Objeto3.Free;
+              GLHUDText1.Destroy;
+              GLHUDText1.Free;
+              GLHUDText2.Destroy;
+              GLHUDText2.free;
+              mosca2.Visible:=true;
+              mosca3.Visible:=true;
+              GLActor1.Position.x:=0;
+              GLFreeForm1.LoadFromFile('scenario.3ds');
+              lampada.Visible:=true;
+              GLSceneViewer1.Cursor:= crNone;
+              cont_mosca1:=1;
+              cont_mosca2:=1;
+              cont_mosca3:=1;
+              conta.Visible:=true;
+              GLFireFXManager1.Destroy;
+              GLFireFXManager1.Free;
+              inicial.Destroy;
+              inicial.Free;
+              Glactor2.Scale.X:=0.5;
+              Glactor2.Scale.Y:=0.5;
+              Glactor2.Scale.Z:=0.5;
+          end
+          else if Objeto1.Rotation = 2
+            then begin
+              GlActor2.visible:=false;
+              botao.Destroy;
+              botao.free;
+              inicia:=1;
+              escolha:= 'chinelo';
+              Objeto1.Destroy;
+              Objeto1.Free;
+              Objeto2.Destroy;
+              Objeto2.free;
+              Objeto3.Destroy;
+              Objeto3.Free;
+              GLHUDText1.Destroy;
+              GLHUDText1.Free;
+              GLHUDText2.Destroy;
+              GLHUDText2.free;
+              mosca2.Visible:=true;
+              mosca3.Visible:=true;
+              GLActor1.Position.x:=0;
+              GLFreeForm1.LoadFromFile('scenario.3ds');
+              lampada.Visible:=true;
+              GLSceneViewer1.Cursor:= crNone;
+              cont_mosca1:=1;
+              cont_mosca2:=1;
+              cont_mosca3:=1;
+              conta.Visible:=true;
+              GLFireFXManager1.Destroy;
+              GLFireFXManager1.Free;
+              inicial.Destroy;
+              inicial.Free;
+              chinelo.Scale.X:=0.35;
+              chinelo.Scale.Y:=0.35;
+              chinelo.Scale.Z:=0.35;
+          end
+            else showmessage('Escolha uma arma!!');
+       end;
+
+     end;
+  end;
+end;
+end.
